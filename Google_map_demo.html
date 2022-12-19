@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+
+  <h1>FFGoogle Map demo: Parastoo_Mobina_Nasim </h1>
+
+  <div id="googleMap" style="width:100%;height:600px;"></div>
+
+  <script>
+    var map;
+    var service;
+    var infowindow;
+
+    async function initialize() {
+
+      var ottawa = new google.maps.LatLng(45.419416, -75.69358);
+
+      map = new google.maps.Map(document.getElementById('googleMap'), {
+        center: ottawa,
+        zoom: 15
+      });
+
+      var marker = new google.maps.Marker({
+        position: { lat: 45.419416, lng: -75.69358 },
+        map,
+        title: "",
+        icon: "https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png"
+      });
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            marker.setPosition(pos);
+            console.log(pos)
+            map.setCenter(pos);
+            var current_loc = new google.maps.LatLng(pos.lat, pos.lng);
+            find(current_loc);
+          },
+        );
+      }
+
+
+    }
+
+    function find(cnt_loc) {
+      var request = {
+        location: cnt_loc,
+        types: ['hospital', 'doctor'], // this is where you set the map to get the hospitals and health related places
+        rankBy: google.maps.places.RankBy.DISTANCE
+      };
+      infowindow = new google.maps.InfoWindow();
+      service = new google.maps.places.PlacesService(map);
+      service.nearbySearch(request, callback);
+    }
+
+    function callback(results, status) {
+      if (status == google.maps.places.PlacesServiceStatus.OK) {
+        for (var i = 0; i < results.length; i++) {
+          var request = {
+            placeId: results[i].place_id,
+            fields: ['url', 'name', 'rating', 'formatted_phone_number', 'geometry', 'formatted_address', 'website']
+          };
+          service.getDetails(request, info_callback);
+        }
+      }
+    }
+
+    function info_callback(results, status) {
+      if (status == google.maps.places.PlacesServiceStatus.OK) {
+        createMarker(results);
+      }
+    }
+
+    function createMarker(place) {
+      var placeLoc = place.geometry.location;
+      var marker = new google.maps.Marker({
+        map: map,
+        position: place.geometry.location
+      });
+      console.log(place.formatted_phone_number)
+      google.maps.event.addListener(marker, 'click', function () {
+        infowindow.setContent('<div><strong>' + place.name + '</strong><br>' + 'Address: ' + place.formatted_address + '<br>' +
+          'Phone: ' + place.formatted_phone_number + '<br>' + '<a href=' + place.website + '>Website</a>' + '</div>' +
+          // add "view on google maps
+          '<div style="border-top: 1px solid rgb(204, 204, 204); margin-top: 9px; padding: 6px; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-family: Roboto, Arial;">' +
+          '<a href="' + place.url + '" target="_blank" rel="noopener" style="cursor: pointer; color: rgb(66, 127, 237); text-decoration: none;">View on Google Maps</a></div>');
+        infowindow.open(map, this);
+      });
+    }
+  </script>
+
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdGjDM0N6Ql8Mvfp84lTv67-0w7zIBz4M&libraries=places&callback=initialize"></script>
+
+</body>
+
+</html>
